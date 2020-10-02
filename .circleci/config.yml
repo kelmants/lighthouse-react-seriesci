@@ -4,6 +4,21 @@ version: 2.1
 orbs:
   # Declare a dependency on the welcome-orb
   welcome: circleci/welcome-orb@0.4.1
+    -run:
+      name: lighthouse audits to seriesci
+      command: |
+      npm run build
+      cd build
+      python3 -m http.server &
+      npx lighthouse http://localhost:3000 --output json --output-path=./lighthouse.json ---chrome-flags="--headless"
+      node -p "required('./lighthouse.json').categories.performance.score * 100 + '%'" | xargs -I {} curl \
+          --header "Authorization: Token 6f426be8-74f9-4b3c-affb-7c5133000056" \
+          --header "Content-Type: application/json" \
+          --data "{
+            \"value\":\"42 %\",
+            \"sha\":\"${CIRCLE_SHA1}\"
+          }" \
+          https://seriesci.com/api/kelmants/lighthouse-react-seriesci/:series/one
 # Orchestrate or schedule a set of jobs
 workflows:
   # Name the workflow "welcome"
